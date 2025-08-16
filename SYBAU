@@ -1,0 +1,191 @@
+--// Nova-Theme UGC Multi Claim GUI (with delete X per ID)
+local MarketplaceService = game:GetService("MarketplaceService")
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+
+-------------------------------------
+-- MAIN UI CONTAINER + FRAME
+-------------------------------------
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "UGCNovaSniper"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = player:WaitForChild("PlayerGui")
+
+local main = Instance.new("Frame")
+main.Size = UDim2.new(0, 350, 0, 300)
+main.Position = UDim2.new(0.5, -175, 0.5, -150)
+main.BackgroundColor3 = Color3.fromRGB(26,26,26)
+main.BorderSizePixel = 0
+main.Active = true
+main.Draggable = true
+main.Parent = screenGui
+
+-- Header
+local header = Instance.new("Frame")
+header.Size = UDim2.new(1, 0, 0, 30)
+header.BackgroundColor3 = Color3.fromRGB(85,0,170)
+header.BorderSizePixel = 0
+header.Parent = main
+
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, 0, 1, 0)
+title.BackgroundTransparency = 1
+title.Text = "INSTANT UGC SYBAU💔"
+title.TextColor3 = Color3.fromRGB(255,255,255)
+title.Font = Enum.Font.SourceSansBold
+title.TextSize = 20
+title.Parent = header
+
+local closeBtn = Instance.new("TextButton")
+closeBtn.Size = UDim2.new(0, 30, 0, 30)
+closeBtn.Position = UDim2.new(1, -30, 0, 0)
+closeBtn.Text = "X"
+closeBtn.BackgroundColor3 = Color3.fromRGB(145,0,0)
+closeBtn.TextColor3 = Color3.fromRGB(255,255,255)
+closeBtn.Font = Enum.Font.SourceSansBold
+closeBtn.TextSize = 20
+closeBtn.Parent = header
+
+-- Input & Add Button
+local input = Instance.new("TextBox")
+input.Size = UDim2.new(1, -20, 0, 35)
+input.Position = UDim2.new(0, 10, 0, 45)
+input.PlaceholderText = "Input ID Asset.."
+input.Text = ""
+input.ClearTextOnFocus = false
+input.BackgroundColor3 = Color3.fromRGB(40,40,40)
+input.TextColor3 = Color3.fromRGB(255,255,255)
+input.Parent = main
+
+local addBtn = Instance.new("TextButton")
+addBtn.Size = UDim2.new(0, 100, 0, 35)
+addBtn.Position = UDim2.new(1, -110, 0, 45)
+addBtn.Text = "Add ID"
+addBtn.BackgroundColor3 = Color3.fromRGB(112,0,204)
+addBtn.TextColor3 = Color3.fromRGB(255,255,255)
+addBtn.Font = Enum.Font.SourceSansBold
+addBtn.TextSize = 20
+addBtn.Parent = main
+
+-- Start Claim Button
+local startBtn = Instance.new("TextButton")
+startBtn.Size = UDim2.new(1, -20, 0, 40)
+startBtn.Position = UDim2.new(0, 10, 0, 90)
+startBtn.Text = "Start Claim All"
+startBtn.BackgroundColor3 = Color3.fromRGB(112,0,204)
+startBtn.TextColor3 = Color3.fromRGB(255,255,255)
+startBtn.Font = Enum.Font.SourceSansBold
+startBtn.TextSize = 22
+startBtn.Parent = main
+
+-- Scroller frame
+local scroll = Instance.new("ScrollingFrame")
+scroll.Size = UDim2.new(1, -20, 1, -140)
+scroll.Position = UDim2.new(0, 10, 0, 140)
+scroll.CanvasSize = UDim2.new(0,0,0,0)
+scroll.BackgroundColor3 = Color3.fromRGB(30,30,30)
+scroll.ScrollBarThickness = 4
+scroll.BorderSizePixel = 0
+scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+scroll.Parent = main
+
+local listLayout = Instance.new("UIListLayout")
+listLayout.Padding = UDim.new(0, 4)
+listLayout.Parent = scroll
+
+----------------------------------------------
+-- Data
+----------------------------------------------
+local idList = {}
+local isClaiming = false
+
+-- Function: create an ID row
+local function createIDRow(idValue)
+    local row = Instance.new("Frame")
+    row.Size = UDim2.new(1, -4, 0, 30)
+    row.BackgroundColor3 = Color3.fromRGB(35,35,35)
+    row.Parent = scroll
+
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, -35, 1, 0)
+    label.Position = UDim2.new(0, 5, 0, 0)
+    label.BackgroundTransparency = 1
+    label.Text = tostring(idValue)
+    label.TextColor3 = Color3.fromRGB(255,255,255)
+    label.Font = Enum.Font.SourceSans
+    label.TextSize = 18
+    label.Parent = row
+
+    local deleteBtn = Instance.new("TextButton")
+    deleteBtn.Size = UDim2.new(0, 30, 0, 30)
+    deleteBtn.Position = UDim2.new(1, -30, 0, 0)
+    deleteBtn.Text = "X"
+    deleteBtn.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
+    deleteBtn.TextColor3 = Color3.fromRGB(255,255,255)
+    deleteBtn.Font = Enum.Font.SourceSansBold
+    deleteBtn.TextSize = 20
+    deleteBtn.Parent = row
+
+    deleteBtn.MouseButton1Click:Connect(function()
+        -- Remove from table
+        for i, v in ipairs(idList) do
+            if tostring(v) == tostring(idValue) then
+                table.remove(idList, i)
+                break
+            end
+        end
+        -- Remove row UI
+        row:Destroy()
+    end)
+end
+
+-- Add Button
+addBtn.MouseButton1Click:Connect(function()
+    local text = input.Text
+    if tonumber(text) and text ~= "" then
+        table.insert(idList, text)
+        createIDRow(text)
+        input.Text = ""
+    end
+end)
+
+-- Start Claim All
+startBtn.MouseButton1Click:Connect(function()
+    if #idList == 0 then
+        startBtn.Text = "ERROR 404"
+        return
+    end
+
+    if not isClaiming then
+        isClaiming = true
+        startBtn.Text = "CLAIMING..."
+        startBtn.BackgroundColor3 = Color3.fromRGB(180,120,0)
+
+        spawn(function()
+            for _, idVal in ipairs(idList) do
+                local success = false
+                while not success and isClaiming do
+                    pcall(function()
+                        MarketplaceService:PromptPurchase(player, tonumber(idVal))
+                    end)
+                    task.wait(0.15)
+                end
+            end
+            isClaiming = false
+            startBtn.Text = "DONE ✅"
+            startBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 0)
+        end)
+    end
+end)
+
+-- Purchase success
+MarketplaceService.PromptPurchaseFinished:Connect(function(userId, assetId, isPurchased)
+    if isClaiming and isPurchased then
+        isClaiming = false
+    end
+end)
+
+-- close
+closeBtn.MouseButton1Click:Connect(function()
+    screenGui:Destroy()
+end)
