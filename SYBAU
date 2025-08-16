@@ -1,10 +1,11 @@
---// Nova-Theme UGC Multi Claim GUI (with delete X per ID)
+--// UGC Nova Sniper [Prompt + HTTP Auto Mode]  by ChatGPT
 local MarketplaceService = game:GetService("MarketplaceService")
 local Players = game:GetService("Players")
+local HttpService = game:GetService("HttpService")
 local player = Players.LocalPlayer
 
 -------------------------------------
--- MAIN UI CONTAINER + FRAME
+-- MAIN UI CONTAINER
 -------------------------------------
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "UGCNovaSniper"
@@ -12,8 +13,8 @@ screenGui.ResetOnSpawn = false
 screenGui.Parent = player:WaitForChild("PlayerGui")
 
 local main = Instance.new("Frame")
-main.Size = UDim2.new(0, 350, 0, 300)
-main.Position = UDim2.new(0.5, -175, 0.5, -150)
+main.Size = UDim2.new(0, 380, 0, 370)
+main.Position = UDim2.new(0.5, -190, 0.5, -185)
 main.BackgroundColor3 = Color3.fromRGB(26,26,26)
 main.BorderSizePixel = 0
 main.Active = true
@@ -28,12 +29,13 @@ header.BorderSizePixel = 0
 header.Parent = main
 
 local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, 0, 1, 0)
+title.Size = UDim2.new(1, -40, 1, 0)
+title.Position = UDim2.new(0, 5, 0, 0)
 title.BackgroundTransparency = 1
-title.Text = "INSTANT UGC SYBAU💔"
+title.Text = "NOVA UGC SNIPER (2 MODE)"
 title.TextColor3 = Color3.fromRGB(255,255,255)
 title.Font = Enum.Font.SourceSansBold
-title.TextSize = 20
+title.TextSize = 18
 title.Parent = header
 
 local closeBtn = Instance.new("TextButton")
@@ -46,11 +48,11 @@ closeBtn.Font = Enum.Font.SourceSansBold
 closeBtn.TextSize = 20
 closeBtn.Parent = header
 
--- Input & Add Button
+-- Input ID
 local input = Instance.new("TextBox")
-input.Size = UDim2.new(1, -20, 0, 35)
+input.Size = UDim2.new(0.6, -15, 0, 30)
 input.Position = UDim2.new(0, 10, 0, 45)
-input.PlaceholderText = "Input ID Asset.."
+input.PlaceholderText = "Input Asset ID..."
 input.Text = ""
 input.ClearTextOnFocus = false
 input.BackgroundColor3 = Color3.fromRGB(40,40,40)
@@ -58,35 +60,55 @@ input.TextColor3 = Color3.fromRGB(255,255,255)
 input.Parent = main
 
 local addBtn = Instance.new("TextButton")
-addBtn.Size = UDim2.new(0, 100, 0, 35)
-addBtn.Position = UDim2.new(1, -110, 0, 45)
+addBtn.Size = UDim2.new(0.4, -15, 0, 30)
+addBtn.Position = UDim2.new(0.6, 25, 0, 45)
 addBtn.Text = "Add ID"
 addBtn.BackgroundColor3 = Color3.fromRGB(112,0,204)
 addBtn.TextColor3 = Color3.fromRGB(255,255,255)
 addBtn.Font = Enum.Font.SourceSansBold
-addBtn.TextSize = 20
+addBtn.TextSize = 18
 addBtn.Parent = main
 
--- Start Claim Button
-local startBtn = Instance.new("TextButton")
-startBtn.Size = UDim2.new(1, -20, 0, 40)
-startBtn.Position = UDim2.new(0, 10, 0, 90)
-startBtn.Text = "Start Claim All"
-startBtn.BackgroundColor3 = Color3.fromRGB(112,0,204)
-startBtn.TextColor3 = Color3.fromRGB(255,255,255)
-startBtn.Font = Enum.Font.SourceSansBold
-startBtn.TextSize = 22
-startBtn.Parent = main
+-- Cookie
+local cookieBox = Instance.new("TextBox")
+cookieBox.Size = UDim2.new(1, -20, 0, 30)
+cookieBox.Position = UDim2.new(0, 10, 0, 85)
+cookieBox.Text = ""
+cookieBox.PlaceholderText = "Cookie (.ROBLOSECURITY) for HTTP Auto"
+cookieBox.ClearTextOnFocus = false
+cookieBox.BackgroundColor3 = Color3.fromRGB(40,40,40)
+cookieBox.TextColor3 = Color3.fromRGB(255,255,255)
+cookieBox.Parent = main
 
--- Scroller frame
+-- 2 Buttons: Prompt + HTTP
+local promptBtn = Instance.new("TextButton")
+promptBtn.Size = UDim2.new(0.5, -15, 0, 35)
+promptBtn.Position = UDim2.new(0, 10, 0, 125)
+promptBtn.Text = "Start Prompt"
+promptBtn.BackgroundColor3 = Color3.fromRGB(0,120,204)
+promptBtn.TextColor3 = Color3.fromRGB(255,255,255)
+promptBtn.Font = Enum.Font.SourceSansBold
+promptBtn.TextSize = 18
+promptBtn.Parent = main
+
+local autoBtn = Instance.new("TextButton")
+autoBtn.Size = UDim2.new(0.5, -15, 0, 35)
+autoBtn.Position = UDim2.new(0.5, 5, 0, 125)
+autoBtn.Text = "Start HTTP Auto"
+autoBtn.BackgroundColor3 = Color3.fromRGB(180,120,0)
+autoBtn.TextColor3 = Color3.fromRGB(255,255,255)
+autoBtn.Font = Enum.Font.SourceSansBold
+autoBtn.TextSize = 18
+autoBtn.Parent = main
+
+-- Scroller
 local scroll = Instance.new("ScrollingFrame")
-scroll.Size = UDim2.new(1, -20, 1, -140)
-scroll.Position = UDim2.new(0, 10, 0, 140)
+scroll.Size = UDim2.new(1, -20, 1, -175)
+scroll.Position = UDim2.new(0, 10, 0, 170)
 scroll.CanvasSize = UDim2.new(0,0,0,0)
 scroll.BackgroundColor3 = Color3.fromRGB(30,30,30)
-scroll.ScrollBarThickness = 4
 scroll.BorderSizePixel = 0
-scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+scroll.ScrollBarThickness = 4
 scroll.Parent = main
 
 local listLayout = Instance.new("UIListLayout")
@@ -98,8 +120,6 @@ listLayout.Parent = scroll
 ----------------------------------------------
 local idList = {}
 local isClaiming = false
-
--- Function: create an ID row
 local function createIDRow(idValue)
     local row = Instance.new("Frame")
     row.Size = UDim2.new(1, -4, 0, 30)
@@ -120,26 +140,23 @@ local function createIDRow(idValue)
     deleteBtn.Size = UDim2.new(0, 30, 0, 30)
     deleteBtn.Position = UDim2.new(1, -30, 0, 0)
     deleteBtn.Text = "X"
-    deleteBtn.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
+    deleteBtn.BackgroundColor3 = Color3.fromRGB(180,0,0)
     deleteBtn.TextColor3 = Color3.fromRGB(255,255,255)
     deleteBtn.Font = Enum.Font.SourceSansBold
     deleteBtn.TextSize = 20
     deleteBtn.Parent = row
 
     deleteBtn.MouseButton1Click:Connect(function()
-        -- Remove from table
         for i, v in ipairs(idList) do
             if tostring(v) == tostring(idValue) then
                 table.remove(idList, i)
                 break
             end
         end
-        -- Remove row UI
         row:Destroy()
     end)
 end
 
--- Add Button
 addBtn.MouseButton1Click:Connect(function()
     local text = input.Text
     if tonumber(text) and text ~= "" then
@@ -149,43 +166,91 @@ addBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- Start Claim All
-startBtn.MouseButton1Click:Connect(function()
+-----------------------------------------
+-- PromptPurchase MODE
+-----------------------------------------
+local function startPromptMode()
     if #idList == 0 then
-        startBtn.Text = "ERROR 404"
+        promptBtn.Text = "NO IDS"
+        return
+    end
+    if isClaiming then return end
+
+    isClaiming = true
+    promptBtn.Text = "CLAIMING..."
+    spawn(function()
+        for _, idVal in ipairs(idList) do
+            if not isClaiming then break end
+            local done = false
+            while not done and isClaiming do
+                pcall(function()
+                    MarketplaceService:PromptPurchase(player, tonumber(idVal))
+                end)
+                task.wait(0.2)
+                -- You can add a break condition based on purchase result if needed
+                done = true
+            end
+        end
+        isClaiming = false
+        promptBtn.Text = "DONE ✅"
+    end)
+end
+
+-----------------------------------------
+-- HTTP Auto MODE
+-----------------------------------------
+local function buyHTTP(assetId, cookie)
+    local url = "https://economy.roblox.com/v1/purchases/products/" .. assetId
+    local data = {}
+    local headers = {
+        ["Content-Type"] = "application/json",
+        ["Cookie"] = ".ROBLOSECURITY="..cookie
+    }
+    local body = HttpService:JSONEncode({
+        expectedCurrency = 1,
+        expectedPrice = 0,
+        expectedSellerId = 1
+    })
+    local req = (syn and syn.request) or http_request or request
+    if req then
+        local result = req({
+            Url = url,
+            Method = "POST",
+            Headers = headers,
+            Body = body
+        })
+        return result.Success
+    else
+        return false
+    end
+end
+
+local function startHttpAuto()
+    local cookie = cookieBox.Text
+    if cookie == "" or #idList == 0 then
+        autoBtn.Text = "NO COOKIE/ID"
         return
     end
 
-    if not isClaiming then
-        isClaiming = true
-        startBtn.Text = "CLAIMING..."
-        startBtn.BackgroundColor3 = Color3.fromRGB(180,120,0)
-
-        spawn(function()
-            for _, idVal in ipairs(idList) do
-                local success = false
-                while not success and isClaiming do
-                    pcall(function()
-                        MarketplaceService:PromptPurchase(player, tonumber(idVal))
-                    end)
-                    task.wait(0.15)
-                end
-            end
-            isClaiming = false
-            startBtn.Text = "DONE ✅"
-            startBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 0)
-        end)
-    end
-end)
-
--- Purchase success
-MarketplaceService.PromptPurchaseFinished:Connect(function(userId, assetId, isPurchased)
-    if isClaiming and isPurchased then
+    isClaiming = true
+    autoBtn.Text = "SNIPING..."
+    spawn(function()
+        for _, idVal in ipairs(idList) do
+            if not isClaiming then break end
+            local s = buyHTTP(idVal, cookie)
+            wait(0.25)
+        end
         isClaiming = false
-    end
-end)
+        autoBtn.Text = "DONE ✅"
+    end)
+end
 
--- close
+-- Bind buttons
+promptBtn.MouseButton1Click:Connect(startPromptMode)
+autoBtn.MouseButton1Click:Connect(startHttpAuto)
+
+-- Close GUI
 closeBtn.MouseButton1Click:Connect(function()
+    isClaiming = false
     screenGui:Destroy()
 end)
